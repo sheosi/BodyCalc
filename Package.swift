@@ -7,7 +7,7 @@ let package = Package(
     name: "SwiftGUI",
     dependencies: [
         .package(name: "gir2swift", url: "https://github.com/rhx/gir2swift.git", .branch("main")),
-        .package(name: "Gtk", url: "https://github.com/rhx/SwiftGtk.git", .branch("gtk3")),
+        .package(name: "Gtk", url: "https://github.com/rhx/SwiftGtk.git", .branch("gtk3"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
