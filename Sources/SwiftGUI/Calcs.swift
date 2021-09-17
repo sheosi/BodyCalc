@@ -6,9 +6,10 @@ public func base_calories(weight: Weight, height: Float32, age: UInt8, sex: Sex 
     else { return (mifflin_st_jeor(weight: weight.total, height: height, age: age, sex: sex), [CaloriesSpecialCases.mifflin_formula])}
 }
 
-public func target_calories(base_cals: Float32, activity: Activity) -> (Float32, Float32) {
-    let (min, max) = activity_adj(act: activity)
-    return (min * base_cals, max * base_cals)
+public func target_calories(base_cals: Float32, activity: Activity, goal: Goal) -> (Float32, Float32) {
+    let (min, max) = activity.adjust()
+    let goal_adj = goal.adjust()
+    return (min * base_cals * goal_adj, max * base_cals * goal_adj)
 }
 
 public func carbs(
@@ -168,24 +169,51 @@ public enum Sex {
     case female
 }
 
-public enum Activity {
-    case sedentary  // No activity, office work
-    case light      // Little daily activity, exercise 1-3 times/week
-    case moderate   // Moderate daily activity, exercise 3-5 times/week
-    case vigorous   // Vigorous daily activity, exercise 6-7 times/week
-    case extreme    // Intense daily worjour, tiring physical job
+public enum Activity: String, CaseIterable {
+    case sedentary = "Sedentary"  // No activity, office work
+    case light     = "Light"      // Little daily activity, exercise 1-3 times/week
+    case moderate  = "Moderate"   // Moderate daily activity, exercise 3-5 times/week
+    case vigorous  = "Vigorous"   // Vigorous daily activity, exercise 6-7 times/week
+    case extreme   = "Extreme"    // Intense daily worjour, tiring physical job
+
+    func adjust() -> (Float32, Float32) {
+        switch self {
+        case .sedentary: return (1.2, 1.2)
+        case .light: return (1.3, 1.4) 
+        case .moderate: return (1.5, 1.6)
+        case .vigorous: return (1.7, 1.8)
+        case .extreme: return (1.9, 2.0)
+    }
+}
 }
 
-public enum GoalIntensity {
-    case light    // 10%
-    case moderate // 15%
-    case high     // 20%
-    case extreme  // 30%
+public enum GoalIntensity: String, CaseIterable {
+    case light    = "Light"    // 10%
+    case moderate = "Moderate" // 15%
+    case high     = "High"     // 20%
+    case extreme  = "Extreme"  // 30%
 }
 
 public enum Goal {
     case weight_loss(GoalIntensity)
     case weight_gain(GoalIntensity)
+
+    func adjust() -> Float32 {
+        func intensity_adj(intensity: GoalIntensity) -> Float32 {
+            switch intensity {
+                case .light: return 0.1
+                case .moderate: return 0.15
+                case .high: return 0.2
+                case .extreme: return 0.3
+            }
+        }
+
+        switch self {
+            case .weight_loss(let intensity): return 1.0 - intensity_adj(intensity: intensity)
+            case .weight_gain(let intensity): return 1.0 + intensity_adj(intensity: intensity)
+        }
+    }
+
 }
 
 public enum MuscleTrainingKind {
@@ -219,35 +247,6 @@ func katch_mcardle(weight: Float32, fat_percent: Float32) -> Float32 {
     let imcm = (weight * (100 - fat_percent)) / 100
     return 370 + (21.6 * imcm)
 }
-
-
-func activity_adj(act: Activity) -> (Float32, Float32) {
-    switch act {
-    case .sedentary: return (1.2, 1.2)
-    case .light: return (1.3, 1.4) 
-    case .moderate: return (1.5, 1.6)
-    case .vigorous: return (1.7, 1.8)
-    case .extreme: return (1.9, 2.0)
-    }
-}
-
-func goal_adj(goal: Goal) -> Float32 {
-    func intensity_adj(intensity: GoalIntensity) -> Float32 {
-        switch intensity {
-            case .light: return 0.1
-            case .moderate: return 0.15
-            case .high: return 0.2
-            case .extreme: return 0.3
-        }
-    }
-
-    switch goal {
-        case .weight_loss(let intensity): return 1.0 - intensity_adj(intensity: intensity)
-        case .weight_gain(let intensity): return 1.0 + intensity_adj(intensity: intensity)
-    }
-
-}
-
 /***** Proteins ***************************************************************/
 
 public enum ProteinSpecialCases {
